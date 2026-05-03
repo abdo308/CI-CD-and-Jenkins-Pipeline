@@ -1,6 +1,14 @@
-# Microservices Starter (Java + React)
+# Calculator App (Java + React)
 
-This is a minimal multi-service starter with Java auth and API services, a database, and a React frontend.
+A modern calculator application with a Java Spring Boot backend and React frontend, designed to demonstrate CI/CD pipelines with Jenkins.
+
+## Features
+
+- **Basic operations**: add, subtract, multiply, divide, modulo
+- **Scientific operations**: power, square root, absolute value, factorial, negate
+- **Full keyboard support**
+- **Calculation history**
+- **REST API backend** with comprehensive unit tests
 
 ## Run
 
@@ -16,16 +24,49 @@ docker compose up --build
 
 ## Services
 
-- Auth: http://localhost:8081/health
-- API: http://localhost:8082/health
-- Postgres: localhost:5432
+- Calculator API: http://localhost:8080/api/health
+- Frontend: http://localhost:5173
 
-## Demo Login
+## Run Tests
 
-- Email: demo@local.test
-- Password: password123
+```bash
+cd services/calculator
+mvn test
+```
 
-## Notes
+## API Endpoints
 
-- Tokens are simple HMAC strings for demo use only.
-- Users are stored with plaintext passwords for simplicity. Replace with hashing for real use.
+| Method | Path             | Description                          |
+|--------|------------------|--------------------------------------|
+| GET    | `/api/health`    | Health check                         |
+| POST   | `/api/calculate` | Perform a calculation                |
+
+### POST /api/calculate
+
+Request body:
+```json
+{
+  "operation": "add",
+  "a": 10,
+  "b": 5
+}
+```
+
+Supported operations: `add`, `subtract`, `multiply`, `divide`, `modulo`, `power`, `sqrt`, `abs`, `negate`, `factorial`
+
+Response:
+```json
+{
+  "operation": "add",
+  "a": 10.0,
+  "b": 5.0,
+  "result": 15.0
+}
+```
+
+## Tech Stack
+
+- **Backend**: Java 17, Spring Boot 3.3, Maven
+- **Frontend**: React 18, Vite 5
+- **Testing**: JUnit 5, Spring MockMvc
+- **CI/CD**: Jenkins
