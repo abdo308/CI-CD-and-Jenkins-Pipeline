@@ -1,16 +1,43 @@
 services:
+  jenkins:
+    image: jenkins/jenkins:latest
+    container_name: jenkins
+    privileged: true
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - app-network
+
   calculator:
     build: ./services/calculator
+    container_name: calculator-backend
     environment:
       PORT: "8080"
     ports:
-      - "8080:8080"
+      - "8082:8080"
+    networks:
+      - app-network
 
   frontend:
     build: ./frontend
+    container_name: calculator-frontend
     environment:
-      VITE_API_URL: "http://localhost:8080"
+      VITE_API_URL: "http://localhost:8082"
     depends_on:
       - calculator
     ports:
       - "5173:5173"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  jenkins_data:
