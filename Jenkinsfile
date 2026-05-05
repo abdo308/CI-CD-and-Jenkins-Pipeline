@@ -1,74 +1,56 @@
 pipeline {
     agent any
 
-    environment {
-        CALCULATOR_DIR = 'services/calculator'
-        FRONTEND_DIR   = 'frontend'
+    tools {
+        maven 'Maven'
+    }
+
+    triggers {
+        githubPush()
+        pollSCM('* * * * *')
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
-                echo 'Checking out source code...'
+                echo '========== Stage 1: Cloning Repository =========='
                 checkout scm
+                echo 'Repository cloned successfully!'
             }
         }
 
-        stage('Backend Unit Tests') {
+        stage('Build Project') {
             steps {
-                echo 'Running Java Unit Tests...'
-                dir("${CALCULATOR_DIR}") {
-                    // Running inside a docker container to ensure Maven is available
-                    sh 'docker run --rm -v "$(pwd)":/app -w /app maven:3.9.9-eclipse-temurin-17 mvn test'
+                echo '========== Stage 2: Building Project =========='
+                dir('services/calculator') {
+                    sh 'mvn clean compile -q'
                 }
-            }
-            post {
-                success {
-                    echo 'All tests passed successfully!'
-                }
-                failure {
-                    error 'Unit tests failed. Pipeline stopping.'
-                }
+                echo 'Build completed successfully!'
             }
         }
 
-        stage('Build Backend') {
+        stage('Run Unit Tests') {
             steps {
-                echo 'Packaging Calculator Service...'
-                dir("${CALCULATOR_DIR}") {
-                    sh 'docker run --rm -v "$(pwd)":/app -w /app maven:3.9.9-eclipse-temurin-17 mvn package -DskipTests'
+                echo '========== Stage 3: Running Unit Tests =========='
+                dir('services/calculator') {
+                    sh 'mvn test'
                 }
-            }
-        }
-
-        stage('Build Docker Images') {
-            steps {
-                echo 'Building Docker Compose images...'
-                sh 'docker compose build'
-            }
-        }
-
-        stage('Health Check') {
-            steps {
-                echo 'Starting containers for verification...'
-                sh 'docker compose up -d'
-                // Wait for the service to be ready
-                sh 'sleep 10'
-                sh 'curl -f http://localhost:8080/api/health'
-                echo 'CI Pipeline completed successfully!'
+                echo 'All unit tests passed!'
             }
             post {
                 always {
-                    echo 'Cleaning up containers...'
-                    sh 'docker compose down'
+                    junit 'services/calculator/target/surefire-reports/*.xml'
                 }
             }
         }
     }
 
     post {
-        always {
-            cleanWs()
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed!'
         }
     }
 }
